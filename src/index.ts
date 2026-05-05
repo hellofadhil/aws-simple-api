@@ -17,7 +17,7 @@ app.get('/healths', async (c) => {
   })
 })
 
-app.get('/tasks', async (c) => {
+app.get('/task', async (c) => {
   const tasks = await prisma.task.findMany({
     orderBy: {
       createdAt: 'desc',
