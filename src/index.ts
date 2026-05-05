@@ -128,5 +128,3 @@ const server = Bun.serve({
 })
 
 console.log(`Server is running on ${server.url}`)
-
-export default app
