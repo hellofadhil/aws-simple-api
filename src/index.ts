@@ -9,7 +9,7 @@ app.get('/', (c) => {
   })
 })
 
-app.get('/health', async (c) => {
+app.get('/healths', async (c) => {
   await prisma.$queryRaw`SELECT 1`
 
   return c.json({
