@@ -22,13 +22,35 @@ fi
 
 cd "${APP_DIR}"
 
+PREVIOUS_REV="$(git rev-parse HEAD)"
+
 git fetch origin "${BRANCH}"
 git checkout "${BRANCH}"
 git reset --hard "origin/${BRANCH}"
 
+CURRENT_REV="$(git rev-parse HEAD)"
+CHANGED_FILES="$(git diff --name-only "${PREVIOUS_REV}" "${CURRENT_REV}")"
+PRISMA_CLIENT_MISSING="false"
+
 bun install --frozen-lockfile
-bun run prisma:generate
-bun run prisma:migrate:deploy
+
+if [ ! -f "node_modules/.prisma/client/client.js" ]; then
+  PRISMA_CLIENT_MISSING="true"
+fi
+
+if [ "${PRISMA_CLIENT_MISSING}" = "true" ] || printf '%s\n' "${CHANGED_FILES}" | grep -Eq '^(prisma/|prisma\.config\.ts$|package\.json$|bun\.lock$)'; then
+  echo "Prisma generate required. Running generate."
+  bun run prisma:generate
+else
+  echo "No Prisma generate needed."
+fi
+
+if printf '%s\n' "${CHANGED_FILES}" | grep -Eq '^(prisma/|prisma\.config\.ts$)'; then
+  echo "Prisma schema or migration changes detected. Running migrate deploy."
+  bun run prisma:migrate:deploy
+else
+  echo "No Prisma schema or migration changes detected. Skipping migrate deploy."
+fi
 
 sudo systemctl restart simple-api
 sudo systemctl status simple-api --no-pager
